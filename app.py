@@ -8,7 +8,6 @@ import plotly.express as px
 model = joblib.load('iot_ids_model.pkl')
 scaler = joblib.load('scaler.pkl')
 
-# EXACT 46 FEATURES FROM YOUR PRINT OUTPUT
 FEATURES = [
     'flow_duration', 'Header_Length', 'Protocol Type', 'Duration', 'Rate', 'Srate', 'Drate', 
     'fin_flag_number', 'syn_flag_number', 'rst_flag_number', 'psh_flag_number', 'ack_flag_number', 
@@ -21,36 +20,54 @@ FEATURES = [
 st.set_page_config(page_title="IoT IDS Detector", page_icon="🛡️", layout="wide")
 
 st.title("🛡️ IoT Intrusion Detection System")
-st.markdown("Upload network traffic logs to detect **Benign** vs **Malicious** activity.")
+st.markdown("Upload network traffic logs or use the **Quick Test** to detect **Benign** vs **Malicious** activity.")
 
-# File Uploader
-uploaded_file = st.file_uploader("Upload Network Traffic CSV", type=["csv"])
+# --- SIDEBAR QUICK TEST ---
+st.sidebar.header("Quick Demo")
+st.sidebar.info("Don't have a CSV? Run a test using the dataset already hosted on GitHub.")
+if st.sidebar.button('🚀 Run Test on GitHub Dataset'):
+    # Direct loading from the repo folder
+    try:
+        df_git = pd.read_csv('part-00000-363d1ba3-8ab5-4f96-bc25-4d5862db7cb9-c000.csv')
+        # Cleaning and Prediction logic
+        input_data = df_git[FEATURES].apply(pd.to_numeric, errors='coerce').fillna(0)
+        scaled_data = scaler.transform(input_data)
+        preds = model.predict(scaled_data)
+        
+        df_git['Status'] = ['MALICIOUS' if p == 1 else 'BENIGN' for p in preds]
+        
+        st.success(f"Analysis Done! Processed {len(df_git)} rows from GitHub.")
+        
+        # Display results
+        c1, c2 = st.columns(2)
+        with c1:
+            st.metric("Threats Found", (preds == 1).sum())
+        with c2:
+            fig = px.pie(df_git, names='Status', color='Status', color_discrete_map={'BENIGN':'#2ecc71','MALICIOUS':'#e74c3c'})
+            st.plotly_chart(fig)
+    except FileNotFoundError:
+        st.sidebar.error("File not found on server. Make sure the CSV name is correct in GitHub.")
+
+st.divider()
+
+# --- MAIN FILE UPLOADER ---
+uploaded_file = st.file_uploader("Upload Your Own Network Traffic CSV", type=["csv"])
 
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
     
     try:
-# 1. Filter for the exact features
-        input_data = df[FEATURES]
-        
-        # 2. Convert all to numeric (in case some columns are read as objects)
-        input_data = input_data.apply(pd.to_numeric, errors='coerce')
-
-        # 3. Handle missing/infinite values (same as you did in v3.ipynb)
+        input_data = df[FEATURES].apply(pd.to_numeric, errors='coerce')
         input_data.replace([np.inf, -np.inf], np.nan, inplace=True)
-        input_data.fillna(0, inplace=True) # Or use input_data.dropna() if you prefer
-        # --------------------------------
+        input_data.fillna(0, inplace=True)
 
-        if st.button('🚀 Start Analysis'):
+        if st.button('🚀 Start Analysis on Uploaded File'):
             with st.spinner('Scanning for threats...'):
-                # Now the scaler should work without the TypeError
                 scaled_input = scaler.transform(input_data)
                 predictions = model.predict(scaled_input)
                 
-                # Mapping results
                 df['Status'] = ['MALICIOUS' if p == 1 else 'BENIGN' for p in predictions]
                 
-                # Visual Results
                 st.success("Analysis Complete!")
                 c1, c2 = st.columns(2)
                 
@@ -69,4 +86,3 @@ if uploaded_file:
 
     except KeyError as e:
         st.error(f"CSV Error: Missing columns {e}")
-
