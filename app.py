@@ -45,8 +45,7 @@ if st.sidebar.button('Run Test on GitHub Dataset'):
             input_data.fillna(0, inplace=True)
             
             # 3. Predict
-           
-                if not input_data.empty:
+            if not input_data.empty:
     try:
         # Data ko numpy array mein convert karke pass karo
         X = input_data.values 
@@ -113,4 +112,5 @@ if uploaded_file:
 
     except KeyError as e:
         st.error(f"Feature Mismatch: Your CSV is missing {e}")
+
 
