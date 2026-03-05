@@ -5,7 +5,6 @@ import numpy as np
 import plotly.express as px
 
 # 1. Load Model and Scaler
-# Make sure these filenames match exactly what you uploaded to GitHub
 try:
     model = joblib.load('iot_ids_model.pkl')
     scaler = joblib.load('scaler.pkl')
@@ -40,77 +39,27 @@ if st.sidebar.button('Run Test on GitHub Dataset'):
             # 1. Select Features & Convert to Numeric
             input_data = df_git[FEATURES].apply(pd.to_numeric, errors='coerce')
             
-            # 2. Handle NaN and Inf (The Fix for TypeError)
+            # 2. Handle NaN and Inf
             input_data.replace([np.inf, -np.inf], np.nan, inplace=True)
             input_data.fillna(0, inplace=True)
             
             # 3. Predict
             if not input_data.empty:
-    try:
-        # Data ko numpy array mein convert karke pass karo
-        X = input_data.values 
-        scaled_data = scaler.transform(X) # Explicitly passing data as X
-        preds = model.predict(scaled_data)
-        
-        df_git['Status'] = ['MALICIOUS' if p == 1 else 'BENIGN' for p in preds]
-        st.success(f"Successfully analyzed {len(df_git)} rows!")
-    except Exception as e:
-        st.error(f"Transform Error: {e}")
-else:
-    st.error("Input data is empty. Please check the CSV.")
-            
-            # Visualization
-            c1, c2 = st.columns(2)
-            with c1:
-                st.metric("Threats Detected", (preds == 1).sum())
-            with c2:
-                fig = px.pie(df_git, names='Status', color='Status', 
-                             color_discrete_map={'BENIGN':'#2ecc71','MALICIOUS':'#e74c3c'})
-                st.plotly_chart(fig)
-                
-            st.dataframe(df_git[['Status'] + FEATURES[:5]].head(100))
-
-    except Exception as e:
-        st.sidebar.error(f"Error: {e}")
-
-st.divider()
-
-# --- MAIN: MANUAL UPLOADER ---
-st.subheader("📤 Upload Custom Traffic Logs")
-uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
-
-if uploaded_file:
-    # Use nrows=100000 to prevent RAM crash on Streamlit Free Tier
-    df = pd.read_csv(uploaded_file, nrows=100000)
-    
-    try:
-        # DATA CLEANING
-        input_data = df[FEATURES].apply(pd.to_numeric, errors='coerce')
-        input_data.replace([np.inf, -np.inf], np.nan, inplace=True)
-        input_data.fillna(0, inplace=True)
-
-        if st.button('🚀 Analyze Uploaded File'):
-            with st.spinner('Scanning for threats...'):
-                scaled_input = scaler.transform(input_data)
-                predictions = model.predict(scaled_input)
-                
-                df['Status'] = ['MALICIOUS' if p == 1 else 'BENIGN' for p in predictions]
-                
-                st.success("Analysis Complete!")
-                res1, res2 = st.columns(2)
-                
-                with res1:
-                    st.metric("Total Packets", len(df))
-                    st.metric("Threats", (predictions == 1).sum())
-                
-                with res2:
-                    fig2 = px.pie(df, names='Status', color='Status',
-                                 color_discrete_map={'BENIGN':'#2ecc71','MALICIOUS':'#e74c3c'})
-                    st.plotly_chart(fig2)
-
-                st.dataframe(df[['Status'] + FEATURES[:5]])
-
-    except KeyError as e:
-        st.error(f"Feature Mismatch: Your CSV is missing {e}")
-
-
+                try:
+                    X = input_data.values 
+                    scaled_data = scaler.transform(X)
+                    preds = model.predict(scaled_data)
+                    
+                    df_git['Status'] = ['MALICIOUS' if p == 1 else 'BENIGN' for p in preds]
+                    st.success(f"Successfully analyzed {len(df_git)} rows!")
+                    
+                    # Visualization
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        st.metric("Threats Detected", (preds == 1).sum())
+                    with c2:
+                        fig = px.pie(df_git, names='Status', color='Status', 
+                                     color_discrete_map={'BENIGN':'#2ecc71','MALICIOUS':'#e74c3c'})
+                        st.plotly_chart(fig)
+                        
+                    st.dataframe(df_git[['Status'] + FEATURES[:5]].head(100))
