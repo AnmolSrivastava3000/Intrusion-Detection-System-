@@ -63,3 +63,50 @@ if st.sidebar.button('Run Test on GitHub Dataset'):
                         st.plotly_chart(fig)
                         
                     st.dataframe(df_git[['Status'] + FEATURES[:5]].head(100))
+                except Exception as e:
+                    st.error(f"Prediction Error: {e}")
+            else:
+                st.error("Input data is empty. Please check the CSV.")
+
+    except Exception as e:
+        st.sidebar.error(f"Error loading file: {e}")
+
+st.divider()
+
+# --- MAIN: MANUAL UPLOADER ---
+st.subheader("📤 Upload Custom Traffic Logs")
+uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
+
+if uploaded_file:
+    df = pd.read_csv(uploaded_file, nrows=100000)
+    
+    try:
+        # DATA CLEANING
+        input_data = df[FEATURES].apply(pd.to_numeric, errors='coerce')
+        input_data.replace([np.inf, -np.inf], np.nan, inplace=True)
+        input_data.fillna(0, inplace=True)
+
+        if st.button('🚀 Analyze Uploaded File'):
+            with st.spinner('Scanning for threats...'):
+                X_uploaded = input_data.values
+                scaled_input = scaler.transform(X_uploaded)
+                predictions = model.predict(scaled_input)
+                
+                df['Status'] = ['MALICIOUS' if p == 1 else 'BENIGN' for p in predictions]
+                
+                st.success("Analysis Complete!")
+                res1, res2 = st.columns(2)
+                
+                with res1:
+                    st.metric("Total Packets", len(df))
+                    st.metric("Threats", (predictions == 1).sum())
+                
+                with res2:
+                    fig2 = px.pie(df, names='Status', color='Status',
+                                 color_discrete_map={'BENIGN':'#2ecc71','MALICIOUS':'#e74c3c'})
+                    st.plotly_chart(fig2)
+
+                st.dataframe(df[['Status'] + FEATURES[:5]])
+
+    except KeyError as e:
+        st.error(f"Feature Mismatch: Your CSV is missing {e}")
