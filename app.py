@@ -45,12 +45,20 @@ if st.sidebar.button('Run Test on GitHub Dataset'):
             input_data.fillna(0, inplace=True)
             
             # 3. Predict
-            scaled_data = scaler.transform(input_data)
-            preds = model.predict(scaled_data)
-            
-            df_git['Status'] = ['MALICIOUS' if p == 1 else 'BENIGN' for p in preds]
-            
-            st.success(f"Successfully analyzed {len(df_git)} rows!")
+           
+                if not input_data.empty:
+    try:
+        # Data ko numpy array mein convert karke pass karo
+        X = input_data.values 
+        scaled_data = scaler.transform(X) # Explicitly passing data as X
+        preds = model.predict(scaled_data)
+        
+        df_git['Status'] = ['MALICIOUS' if p == 1 else 'BENIGN' for p in preds]
+        st.success(f"Successfully analyzed {len(df_git)} rows!")
+    except Exception as e:
+        st.error(f"Transform Error: {e}")
+else:
+    st.error("Input data is empty. Please check the CSV.")
             
             # Visualization
             c1, c2 = st.columns(2)
@@ -105,3 +113,4 @@ if uploaded_file:
 
     except KeyError as e:
         st.error(f"Feature Mismatch: Your CSV is missing {e}")
+
