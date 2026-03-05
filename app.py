@@ -30,12 +30,20 @@ if uploaded_file:
     df = pd.read_csv(uploaded_file)
     
     try:
-        # Filter for the exact 46 features
+# 1. Filter for the exact features
         input_data = df[FEATURES]
         
+        # 2. Convert all to numeric (in case some columns are read as objects)
+        input_data = input_data.apply(pd.to_numeric, errors='coerce')
+
+        # 3. Handle missing/infinite values (same as you did in v3.ipynb)
+        input_data.replace([np.inf, -np.inf], np.nan, inplace=True)
+        input_data.fillna(0, inplace=True) # Or use input_data.dropna() if you prefer
+        # --------------------------------
+
         if st.button('🚀 Start Analysis'):
             with st.spinner('Scanning for threats...'):
-                # Preprocess and Predict
+                # Now the scaler should work without the TypeError
                 scaled_input = scaler.transform(input_data)
                 predictions = model.predict(scaled_input)
                 
@@ -61,3 +69,4 @@ if uploaded_file:
 
     except KeyError as e:
         st.error(f"CSV Error: Missing columns {e}")
+
