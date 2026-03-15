@@ -34,7 +34,7 @@ if st.sidebar.button('Run Test on GitHub Dataset'):
     try:
         with st.spinner('Loading data from GitHub...'):
             # Loading the file you pushed with LFS
-            df_git = pd.read_csv('part-00000-363d1ba3-8ab5-4f96-bc25-4d5862db7cb9-c000.csv',, nrows=10000)
+            df_git = pd.read_csv('part-00000-363d1ba3-8ab5-4f96-bc25-4d5862db7cb9-c000.csv', nrows=10000)
             
             # 1. Select Features & Convert to Numeric
             input_data = df_git[FEATURES].apply(pd.to_numeric, errors='coerce')
