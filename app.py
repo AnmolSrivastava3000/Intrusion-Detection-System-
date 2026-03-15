@@ -75,7 +75,7 @@ if 'result_df' in st.session_state:
                 row_shap = shap_v.flatten()
                 base_val = explainer.expected_value
 
-            # Build the same Importance DF from your notebook
+            # Build the same Importance DF
             importance_df = pd.DataFrame({
                 "Feature": FEATURES,
                 "SHAP Value": row_shap
