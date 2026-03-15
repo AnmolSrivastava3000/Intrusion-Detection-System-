@@ -47,7 +47,7 @@ if st.sidebar.button('Run Test on GitHub Dataset'):
             if not input_data.empty:
                 try:
                     X = input_data.values 
-                    scaled_data = scaler.transform(X)
+                    scaled_data = scaler.transform(input_data)
                     preds = model.predict(scaled_data)
                     
                     df_git['Status'] = ['MALICIOUS' if p == 1 else 'BENIGN' for p in preds]
