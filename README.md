@@ -2,13 +2,12 @@
 IDS ,anomaly based ,logistic regression ,CICIOT2023 ,for IOT devices (resource constrained)
 
 
-# 🛡️ IoT Intrusion Detection System (IDS)
-**8th Semester Major Project | B.Tech CSE**
+# 🛡️ IoT Intrusion Detection System (IDS) | B.Tech CSE**
 
 This project is a real-time Network Intrusion Detection System designed specifically for IoT environments. It uses Machine Learning to classify network traffic as **Benign** (Safe) or **Malicious** (Attack) with high precision.
 
 ## 🚀 Live Demo
-Check out the live web application here: `[PASTE_YOUR_STREAMLIT_LINK_HERE]`
+Check out the live web application here:
 
 ## 📊 Project Overview
 - **Dataset:** CICIoT2023 (Comprehensive IoT Cybersecurity Dataset).
@@ -38,6 +37,4 @@ The model inspects 46 features from network packets, including:
 
 ## 👨‍💻 Author
 **Anmol Srivastava** B.Tech CSE Student @ Galgotias University
-
----
 *Developed as part of the 8th Semester Research Project on Intrusion Detection Systems.*
