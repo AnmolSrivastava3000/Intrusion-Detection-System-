@@ -15,7 +15,7 @@ def load_assets():
 
 model, scaler = load_assets()
 
-# Use the feature names exactly as they appeared in your notebook
+# Use the feature names exactly as they appeared in notebook
 FEATURES = [
     'flow_duration', 'Header_Length', 'Protocol Type', 'Duration', 'Rate', 'Srate', 'Drate', 
     'fin_flag_number', 'syn_flag_number', 'rst_flag_number', 'psh_flag_number', 'ack_flag_number', 
@@ -48,7 +48,7 @@ if uploaded_file:
         st.success("Scan Complete!")
         st.dataframe(df[['Status'] + FEATURES[:5]])
 
-# --- STEP 2: EXPLAINABILITY (The Research Part) ---
+# --- STEP 2: EXPLAINABILITY
 if 'result_df' in st.session_state:
     st.divider()
     st.header("🔍 Explainable AI Deep Dive")
