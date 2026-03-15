@@ -46,13 +46,12 @@ if st.sidebar.button('Run Test on GitHub Dataset'):
             # 3. Predict
             if not input_data.empty:
                 try:
-                    X = input_data.values 
-                    scaled_data = scaler.transform(input_data)
-                    preds = model.predict(scaled_data)
+                    # Explicitly convert to numpy to avoid any dataframe header mismatch issues
+                    X_scaled = scaler.transform(input_data.values) 
+                    preds = model.predict(X_scaled)
                     
                     df_git['Status'] = ['MALICIOUS' if p == 1 else 'BENIGN' for p in preds]
                     st.success(f"Successfully analyzed {len(df_git)} rows!")
-                    
                     # Visualization
                     c1, c2 = st.columns(2)
                     with c1:
