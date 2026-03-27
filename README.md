@@ -35,20 +35,6 @@ Visualization: Matplotlib, Seaborn
 ├── sample_test.csv             # Sample dataset for users to test the live app
 └── README.md                   # Project documentation
 
-💻 Local Installation & Usage
-To run this project on your local machine, follow these steps:
-
-1. Clone the repository
-
-Bash-
-
-2. Install dependencies
-
-Bash- pip install -r requirements.txt
-
-3. Run the Streamlit App
-4. 
-Bash- streamlit run app.py
 
 🌐 Cloud Deployment
 This application is designed to be easily deployed on Streamlit Community Cloud. Simply link this GitHub repository to your Streamlit account, point it to app.py, and the platform will handle the rest using the provided requirements.txt file.
