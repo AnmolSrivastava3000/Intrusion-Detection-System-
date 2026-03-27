@@ -1,65 +1,54 @@
-# 🛡️ Explainable IoT Intrusion Detection System (X-IDS)
+link to app-
+🔐 IoT Intrusion Detection System (IDS) with Explainable AI
+This repository contains an end-to-end Machine Learning pipeline and interactive web application for detecting anomalies and cyberattacks in IoT networks. The system is built using a highly optimized Random Forest classifier and features built-in Explainable AI (XAI) using SHAP to provide transparency into how predictions are made.
 
-abstract from paper -ABSTRACT
-The increased use of Internet of Things (IoT) devices has
-expanded attack surface. The resource-constrained nature of
-these devices makes them highly susceptible to cyberthreats.
-Generally, Signature based Intrusion detection system (IDS) is
-used for surveillance on IoT devices. However, Signature-based
-IDS are not well suited for novel, zero-day attacks. Anomalybased IDS have better record against zero-day attacks. This study
-evaluates five machine learning models i.e.- Logistic Regression
-(LR), Decision Tree (DT), Random Forest (RF), XGBoost and
-Voting Ensemble. In this study, models are trained and evaluated
-on subset (3 lakhs attack/benign type) of CICIoT2023 dataset.
-This study implements a strategic 40:60 data balancing technique
-(under sampling attack traffic) to ensure robust detection of both
-benign and malicious patterns. This research aims to achieve a
-balance between computational cost and performance with
-machine learning for new age IoT security. Results indicate that
-the Random Forest model achieved the highest accuracy of
-99.66%, outperforming the other evaluated models.
+Developed by Anmol Srivastava as an 8th-semester B.Tech Computer Science and Engineering project.
 
+🚀 Features
+High-Accuracy Detection: Trained on the CICIoT2023 dataset, classifying network traffic as either 'Benign' or 'Attack' with exceptional accuracy and F1-scores.
 
-While working on this project I added interpretable-SHAP (SHapley Additive exPlanations).As their was need to explain how this model not only pick single parameter but test and work on different parameter.Traditional Intrusion Detection Systems (IDS) often act as "black boxes," providing detection results without reasoning. This project addresses the "Black Box" problem by integrating Explainable AI (XAI). Our system classifies network traffic into Benign or Malicious and provides a breakdown of which network features (e.g., Packet Rate, Header Length) influenced the decision.
+Real-Time Web Interface: A lightweight, user-friendly frontend built with Streamlit that allows users to upload network traffic CSV files and get instant predictions.
 
-## 🚀 Live Demo
-The application is deployed on Streamlit Cloud: https://bp2femsffh4yonhygceyny.streamlit.app/
+Explainable AI (SHAP): Integrates shap.TreeExplainer to visualize feature importance, breaking down exactly which network features triggered an 'Attack' classification.
 
-## 📖 Project Overview
+Dynamic Feature Alignment: Uses a configuration file (feature_config.json) to automatically validate and align incoming data features, ensuring pipeline stability.
 
-### Key Features:
-* **Ensemble Modeling:** Uses a Voting Classifier (Random Forest + XGBoost + Logistic Regression).
-* Random Forest scored highest while testing the models.
-* **Real-time Explainability:** Integrated SHAP summary and bar plots for post-hoc interpretability.
-* **Scalable Architecture:** Pre-processed using standard scaling and optimized for low-latency cloud inference.
+🛠️ Tech Stack
+Language: Python 3
 
-## 🛠️ System Architecture
-1. Data Ingestion: Loads IoT network traffic logs (CICIoT2023 sub part of Dataset).
-2. Preprocessing: Feature selection (46 features) and Standardization via `StandardScaler`.
-3. Inference Engine: Hybrid Ensemble model classifies traffic with ~99% accuracy.
-4. XAI Layer: SHAP TreeExplainer generates local feature contribution charts.
+Machine Learning: Scikit-Learn (Random Forest), XGBoost
 
-## 📂 Repository Structure
-* `app.py`: The Streamlit dashboard interface.
-* `Intrusion-Detection-System.ipynb`: Training notebook including Data Balancing (40/60) and SHAP analysis.
-* `iot_ids_model.pkl`: The serialized pre-trained Ensemble model.
-* `scaler.pkl`: Serialized StandardScaler fitted on training data.
-* `requirements.txt`: Necessary Python libraries for deployment.
+Explainability: SHAP (SHapley Additive exPlanations)
 
-## 🔧 Installation & Local Setup
-1. Clone the repo:
+Data Processing: Pandas, NumPy
 
-Install dependencies:
+Web Framework: Streamlit
 
-Bash
-pip install -r requirements.txt
-Run the app:
+Visualization: Matplotlib, Seaborn
 
-Bash
-streamlit run app.py
+📂 Repository Structure
+├── app.py                      # Main Streamlit web application script
+├── IDS_with_shap.ipynb         # Jupyter Notebook with data processing, model training, and SHAP logic
+├── ids_pipeline.pkl            # Pre-trained Random Forest model
+├── feature_config.json         # JSON file containing the exact features used during training
+├── requirements.txt            # Python dependencies for deployment
+├── sample_test.csv             # Sample dataset for users to test the live app
+└── README.md                   # Project documentation
 
-📊 Dataset Reference
-This project utilizes the CICIoT2023 Dataset, a comprehensive benchmark for IoT security. We utilized a balanced subset of 300,000 samples to ensure model robustness across various attack vectors including DDoS, DoS, and Mirai botnets.
+💻 Local Installation & Usage
+To run this project on your local machine, follow these steps:
 
-🎓 Author
-Anmol Srivastava B.Tech Computer Science (2022-2026)
+1. Clone the repository
+
+Bash-
+
+2. Install dependencies
+
+Bash- pip install -r requirements.txt
+
+3. Run the Streamlit App
+4. 
+Bash- streamlit run app.py
+
+🌐 Cloud Deployment
+This application is designed to be easily deployed on Streamlit Community Cloud. Simply link this GitHub repository to your Streamlit account, point it to app.py, and the platform will handle the rest using the provided requirements.txt file.
