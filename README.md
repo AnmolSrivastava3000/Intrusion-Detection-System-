@@ -1,8 +1,8 @@
-link to app-
 🔐 IoT Intrusion Detection System (IDS) with Explainable AI
 This repository contains an end-to-end Machine Learning pipeline and interactive web application for detecting anomalies and cyberattacks in IoT networks. The system is built using a highly optimized Random Forest classifier and features built-in Explainable AI (XAI) using SHAP to provide transparency into how predictions are made.
 
 Developed by Anmol Srivastava as an 8th-semester B.Tech Computer Science and Engineering project.
+link to app- https://6ednj6mjugzcxksvcnlgoj.streamlit.app/
 
 🚀 Features
 High-Accuracy Detection: Trained on the CICIoT2023 dataset, classifying network traffic as either 'Benign' or 'Attack' with exceptional accuracy and F1-scores.
