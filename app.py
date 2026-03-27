@@ -1,181 +1,136 @@
+# ==============================
+# STREAMLIT APP (IMPROVED)
+# ==============================
+
 import streamlit as st
 import pandas as pd
-import joblib
 import numpy as np
+import joblib
+import json
 import shap
 import matplotlib.pyplot as plt
-import os
 
-# -----------------------------
-# PAGE CONFIG
-# -----------------------------
+# ------------------------------
+# CONFIG
+# ------------------------------
 st.set_page_config(page_title="IoT IDS", layout="wide")
-st.title("🛡️ Explainable IoT Intrusion Detection")
+st.title("🔐 IoT Intrusion Detection System")
 
-# -----------------------------
-# LOAD MODEL + SCALER
-# -----------------------------
+# ------------------------------
+# LOAD MODEL + FEATURES
+# ------------------------------
 @st.cache_resource
-def load_assets():
-    model = joblib.load("iot_ids_model.pkl")
-    scaler = joblib.load("scaler.pkl")
-    explainer = shap.TreeExplainer(model)
-    return model, scaler, explainer
+def load_model():
+    return joblib.load("ids_pipeline.pkl")
 
-model, scaler, explainer = load_assets()
+@st.cache_data
+def load_features():
+    with open("feature_config.json") as f:
+        return json.load(f)
 
-# -----------------------------
-# FEATURE LIST
-# -----------------------------
-FEATURES = [
-    'flow_duration','Header_Length','Protocol Type','Duration','Rate','Srate','Drate',
-    'fin_flag_number','syn_flag_number','rst_flag_number','psh_flag_number','ack_flag_number',
-    'ece_flag_number','cwr_flag_number','ack_count','syn_count','fin_count','urg_count',
-    'rst_count','HTTP','HTTPS','DNS','Telnet','SMTP','SSH','IRC','TCP','UDP','DHCP',
-    'ARP','ICMP','IPv','LLC','Tot sum','Min','Max','AVG','Std','Tot size','IAT',
-    'Number','Magnitue','Radius','Covariance','Variance','Weight'
-]
+model = load_model()
+config = load_features()
+FEATURES = config["features"]
 
-# -----------------------------
-# SIDEBAR DEMO DATA
-# -----------------------------
-st.sidebar.header("🚀 Quick Demo")
-
-github_csv = "part-00000-363d1ba3-8ab5-4f96-bc25-4d5862db7cb9-c000.csv"
-
-if st.sidebar.button("Run Test on GitHub Dataset"):
-
-    if os.path.exists(github_csv):
-
-        df_git = pd.read_csv(github_csv, nrows=1000)
-
-        input_data = df_git[FEATURES].apply(pd.to_numeric, errors="coerce").fillna(0)
-
-        X_scaled = scaler.transform(input_data.values)
-
-        preds = model.predict(X_scaled)
-
-        df_git["Status"] = ["MALICIOUS" if p == 1 else "BENIGN" for p in preds]
-
-        st.session_state["result_df"] = df_git
-        st.session_state["scaled_data"] = X_scaled
-
-        st.sidebar.success("Dataset Loaded!")
-
-    else:
-        st.sidebar.error("CSV not found")
-
-# -----------------------------
+# ------------------------------
 # FILE UPLOAD
-# -----------------------------
-uploaded_file = st.file_uploader("Upload Network Traffic CSV", type="csv")
+# ------------------------------
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
 if uploaded_file:
 
-    df = pd.read_csv(uploaded_file, nrows=1000)
+    try:
+        df = pd.read_csv(uploaded_file)
+        st.success("✅ File uploaded successfully")
 
-    input_data = df[FEATURES].apply(pd.to_numeric, errors="coerce").fillna(0)
+        st.subheader("📄 Data Preview")
+        st.dataframe(df.head())
 
-    X_scaled = scaler.transform(input_data.values)
+        # ------------------------------
+        # VALIDATION
+        # ------------------------------
+        missing = set(FEATURES) - set(df.columns)
+        extra = set(df.columns) - set(FEATURES)
 
-    if st.button("🚀 Run IDS Scan"):
+        if missing:
+            st.error(f"❌ Missing columns: {list(missing)}")
+            st.stop()
 
-        preds = model.predict(X_scaled)
+        # Keep only required columns in correct order
+        X = df[FEATURES].copy()
 
-        df["Status"] = ["MALICIOUS" if p == 1 else "BENIGN" for p in preds]
+        # Null handling
+        if X.isnull().sum().sum() > 0:
+            st.warning("⚠️ Missing values detected. Filling with 0.")
+            X = X.fillna(0)
 
-        st.session_state["result_df"] = df
-        st.session_state["scaled_data"] = X_scaled
+        # ------------------------------
+        # PREDICTION
+        # ------------------------------
+        preds = model.predict(X)
 
+        df["Prediction"] = np.where(preds == 1, "Attack", "Benign")
 
-# -----------------------------
-# RESULTS
-# -----------------------------
-if "result_df" in st.session_state:
+        st.subheader("🔍 Predictions")
+        st.dataframe(df.head())
 
-    st.success("Scan Complete!")
+        # ------------------------------
+        # SUMMARY
+        # ------------------------------
+        col1, col2 = st.columns(2)
 
-    result_df = st.session_state["result_df"]
+        attack_count = int((preds == 1).sum())
+        benign_count = int((preds == 0).sum())
 
-    st.dataframe(result_df[["Status"] + FEATURES[:5]])
+        col1.metric("🟢 Benign", benign_count)
+        col2.metric("🔴 Attack", attack_count)
 
-    # -----------------------------
-    # PREDICTION DISTRIBUTION
-    # -----------------------------
-    st.subheader("📊 Prediction Distribution")
+        # ------------------------------
+        # DOWNLOAD RESULTS
+        # ------------------------------
+        csv = df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            "📥 Download Results",
+            csv,
+            "predictions.csv",
+            "text/csv"
+        )
+# ------------------------------
+        # SHAP
+        # ------------------------------
+        st.subheader("🧠 Model Explainability")
 
-    counts = result_df["Status"].value_counts()
+        # Keep sample size small to ensure the web app stays fast
+        sample_size = min(200, len(X))
+        X_sample = X.sample(sample_size, random_state=42)
 
-    st.bar_chart(counts)
+        try:
+            with st.spinner("Generating SHAP explanations..."):
+                # 1. Extract the actual model if it's wrapped in a Pipeline
+                if hasattr(model, "named_steps"):
+                    model_for_shap = model.named_steps["model"]
+                    # (Note: if you used a scaler in your pipeline, you would need to scale X_sample here first. 
+                    # But since Random Forest doesn't need scaling, this is safe).
+                else:
+                    model_for_shap = model
 
-    st.divider()
+                # 2. Use TreeExplainer for blazing fast performance
+                explainer = shap.TreeExplainer(model_for_shap)
+                shap_values = explainer.shap_values(X_sample)
 
-    # -----------------------------
-    # SHAP EXPLANATION
-    # -----------------------------
-    st.header("🔍 Explainable AI Deep Dive")
+                # 3. Handle Binary Classification Output (Focus on Class 1: Attack)
+                if isinstance(shap_values, list):
+                    plot_values = shap_values[1] 
+                elif len(shap_values.shape) == 3:
+                    plot_values = shap_values[:, :, 1]
+                else:
+                    plot_values = shap_values
 
-    row_to_explain = st.number_input(
-        "Select Row Index",
-        min_value=0,
-        max_value=len(result_df) - 1,
-        value=0
-    )
+                # 4. Render plot safely in Streamlit
+                plt.figure(figsize=(10, 6))
+                shap.summary_plot(plot_values, X_sample, show=False)
+                st.pyplot(plt.gcf())
+                plt.clf() # Clear the figure to free up memory
 
-    if st.button("Explain Prediction"):
-
-        with st.spinner("Calculating SHAP explanation..."):
-
-            sample_scaled = st.session_state["scaled_data"][row_to_explain].reshape(1, -1)
-
-            shap_values = explainer.shap_values(sample_scaled)
-
-            # Handle SHAP output
-            if isinstance(shap_values, list):
-                row_shap = shap_values[1].flatten()
-            else:
-                row_shap = shap_values.flatten()
-
-            # Fix double-length issue (92 instead of 46)
-            if len(row_shap) == len(FEATURES) * 2:
-                row_shap = row_shap.reshape(2, -1)[1]
-
-            importance_df = pd.DataFrame({
-                "Feature": FEATURES,
-                "SHAP Value": row_shap
-            })
-
-            importance_df["abs_val"] = importance_df["SHAP Value"].abs()
-
-            importance_df = importance_df.sort_values(
-                by="abs_val",
-                ascending=False
-            ).head(10)
-
-            importance_df = importance_df.sort_values(by="SHAP Value")
-
-            # -----------------------------
-            # PLOT
-            # -----------------------------
-            fig, ax = plt.subplots(figsize=(8,4))
-
-            colors = [
-                "#ff0051" if x > 0 else "#008bfb"
-                for x in importance_df["SHAP Value"]
-            ]
-
-            ax.barh(
-                importance_df["Feature"],
-                importance_df["SHAP Value"],
-                color=colors
-            )
-
-            ax.set_xlabel("Impact on Attack Prediction")
-            ax.set_title("Local SHAP Explanation")
-
-            st.pyplot(fig)
-            st.markdown(f"""
-**Interpretation:** * Features in **<span style='color:#ff0051'>Red</span>** increased the probability of an Attack.
-* Features in **<span style='color:#008bfb'>Blue</span>** decreased the probability (pushed toward Benign).
-* Current Prediction for Row {row_to_explain}: **{result_df.iloc[row_to_explain]['Status']}**
-""", unsafe_allow_html=True)
+        except Exception as e:
+            st.warning(f"SHAP explanation failed: {e}")
