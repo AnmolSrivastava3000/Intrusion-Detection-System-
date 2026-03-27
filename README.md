@@ -52,3 +52,5 @@ Bash- streamlit run app.py
 
 🌐 Cloud Deployment
 This application is designed to be easily deployed on Streamlit Community Cloud. Simply link this GitHub repository to your Streamlit account, point it to app.py, and the platform will handle the rest using the provided requirements.txt file.
+
+P.S.- i have added one of csv files from CICIoT dataset if you want to test it offline.
